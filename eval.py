@@ -31,8 +31,8 @@ def segment(net, img):
     preprocess = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize(
-            mean=[0.485],
-            std=[0.229]
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225]
         ),
     ])
 
@@ -52,9 +52,24 @@ def segment(net, img):
 
     return r, output_predictions
 
-img = np.array(Image.open('UCSD_dataset/birds_/birds/in/frame_1.jpg'))
-fg_h, fg_w = img.shape
+
+def pixel_accuracy(y_pred,y_true):
+    return np.mean(y_pred==y_true)*100
+
+def mIOU(y_pred,y_true):
+    intersection = np.sum(y_pred*y_true)
+    union = y_pred+y_true
+    union = np.sum(union>0)
+    return np.mean(intersection/union)*100
+
+img = np.array(Image.open('SBI2015_dataset/Board/input/in000000.png'))
+gt = np.array(Image.open('SBI2015_dataset/Board/groundtruth/gt000000.png'))
+fg_h, fg_w, _ = img.shape
 segment_map, pred = segment(model, img)
-fig, axes = plt.subplots(1, 2, figsize=(20, 10))
-axes[0].imshow(img)
-axes[1].imshow(segment_map)
+gt[gt>0] = 1
+pred[pred>0] = 1
+print(mIOU(pred,gt))
+# fig, axes = plt.subplots(1, 2, figsize=(20, 10))
+# axes[0].imshow(img)
+# axes[1].imshow(segment_map)
+
