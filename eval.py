@@ -5,6 +5,7 @@ import matplotlib.patches as mpatches
 import torch
 from torchvision import transforms, models
 import os
+from tqdm import tqdm
 
 labels = ['background', 'aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
 model = models.segmentation.deeplabv3_resnet101(pretrained=True).eval()
@@ -78,11 +79,10 @@ for i in os.listdir(dataset):
     gts = os.listdir(dataset+"/" + i + "/groundtruth/" )
     imgs.sort()
     gts.sort()
-    for j in range(len(imgs)):
+    for j in tqdm(range(len(imgs))):
         img = np.array(Image.open(dataset+'/'+i +'/input/'+imgs[j]))
         gt = np.array(Image.open(dataset+'/'+i +'/groundtruth/'+gts[j]))
         mIOUs.append(eval(img,gt))
-        print("         Processed %d/%d"%(j+1,len(imgs)))
     
 print(np.mean(mIOUs))
 
