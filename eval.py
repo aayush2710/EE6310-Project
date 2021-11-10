@@ -40,6 +40,7 @@ def segment(net, img):
     input_batch = input_tensor.unsqueeze(0)
 
     if torch.cuda.is_available():
+        print("Working on CUDA")
         input_batch = input_batch.to('cuda')
         model.to('cuda')
 
