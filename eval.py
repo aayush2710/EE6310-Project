@@ -53,11 +53,16 @@ def mIOU(y_pred,y_true):
     union = np.sum(union>0)
     return np.mean(intersection/union)*100
 
+def dice(y_pred, y_true):
+    intersection = np.sum(y_pred*y_true)
+    total_pixels = len(y_pred.flatten())*len(y_true.flatten())
+    return intersection/total_pixels
+
 def eval(img,gt):
     segment_map, pred = segment(model, img)
     gt[gt>0] = 1
     pred[pred>0] = 1
-    return mIOU(pred,gt), pixel_accuracy(pred,gt)
+    return mIOU(pred,gt), pixel_accuracy(pred,gt), dice(pred, gt)
 
 
 dataset="PascalVOC2012"
