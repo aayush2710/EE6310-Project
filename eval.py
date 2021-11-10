@@ -57,7 +57,7 @@ def eval(img,gt):
     segment_map, pred = segment(model, img)
     gt[gt>0] = 1
     pred[pred>0] = 1
-    return mIOU(pred,gt)
+    return mIOU(pred,gt), pixel_accuracy(pred,gt)
 
 
 dataset="PascalVOC2012"
@@ -74,7 +74,10 @@ for i in os.listdir(dataset):
         img = np.array(Image.open(dataset+'/'+i +'/input/'+imgs[j]))
         gt = np.array(Image.open(dataset+'/'+i +'/groundtruth/'+gts[j]))
         mIOUs.append(eval(img,gt))
-    categorical_miou[i]=np.nanmean(mIOUs)
+        break
+    mIOUs = np.array(mIOUs)
+    print(mIOUs)
+    categorical_miou[i]=np.nanmean(mIOUs, axis=0)
     
 print(categorical_miou)
 
