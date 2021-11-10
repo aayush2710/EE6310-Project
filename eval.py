@@ -53,7 +53,7 @@ def mIOU(y_pred,y_true):
     union = np.sum(union>0)
     return np.mean(intersection/union)*100
 
-def dice(y_pred, y_true. smooth=1):
+def dice(y_pred, y_true, smooth=1):
     intersection = np.sum(y_pred*y_true)
     # union = y_pred+y_true
     # union = np.sum(union > 0)
