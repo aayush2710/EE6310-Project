@@ -76,7 +76,6 @@ for i in os.listdir(dataset):
         mIOUs.append(eval(img,gt))
         break
     mIOUs = np.array(mIOUs)
-    print(mIOUs)
     categorical_miou[i]=np.nanmean(mIOUs, axis=0)
     
 print(categorical_miou)
