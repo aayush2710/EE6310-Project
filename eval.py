@@ -8,7 +8,7 @@ import os
 from tqdm import tqdm
 
 
-model = models.segmentation.fcn_resnet101(pretrained=True).eval()
+model = models.segmentation.deeplabv3_resnet101(pretrained=True).eval()
 cmap = plt.cm.get_cmap('tab20c')
 colors = (cmap(np.arange(cmap.N)) * 255).astype(np.int)[:, :3].tolist()
 np.random.seed(2020)
@@ -60,7 +60,7 @@ def eval(img,gt):
     return mIOU(pred,gt)
 
 
-dataset="SBI2015_dataset"
+dataset="PascalVOC2012"
 mIOUs = []
 categorical_miou = {}
 for i in os.listdir(dataset):
