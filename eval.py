@@ -75,6 +75,8 @@ mIOUs = []
 for i in os.listdir(dataset):
     imgs = os.listdir(dataset+"/" + i + "/input/")
     gts = os.listdir(dataset+"/" + i + "/groundtruth/" )
+    imgs.sort()
+    gts.sort()
     for j in range(len(imgs)):
         img = np.array(Image.open(dataset+'/'+i +'/input/'+imgs[j]))
         gt = np.array(Image.open(dataset+'/'+i +'/groundtruth/'+gts[j]))
