@@ -27,7 +27,8 @@ for i in range(21):
 # plt.figure(figsize=(20, 2))
 # plt.legend(handles=legend)
 # plt.imshow(palette_map)
-
+if torch.cuda.is_available():
+        print("Working on CUDA")
 def segment(net, img):
     preprocess = transforms.Compose([
         transforms.ToTensor(),
@@ -41,7 +42,6 @@ def segment(net, img):
     input_batch = input_tensor.unsqueeze(0)
 
     if torch.cuda.is_available():
-        print("Working on CUDA")
         input_batch = input_batch.to('cuda')
         model.to('cuda')
 
