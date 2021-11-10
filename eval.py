@@ -81,7 +81,8 @@ for i in os.listdir(dataset):
         img = np.array(Image.open(dataset+'/'+i +'/input/'+imgs[j]))
         gt = np.array(Image.open(dataset+'/'+i +'/groundtruth/'+gts[j]))
         mIOUs.append(eval(img,gt))
-
+        print("         Processed %d/%d"%(j,len(imgs)))
+    
 print(np.mean(mIOUs))
 
 # fig, axes = plt.subplots(1, 2, figsize=(20, 10))
