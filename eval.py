@@ -74,7 +74,10 @@ def eval(img,gt):
 
 dataset="SBI2015_dataset"
 mIOUs = []
+categorical_miou = {}
 for i in os.listdir(dataset):
+    if i[0]==".":
+        continue
     imgs = os.listdir(dataset+"/" + i + "/input/")
     gts = os.listdir(dataset+"/" + i + "/groundtruth/" )
     imgs.sort()
@@ -83,8 +86,9 @@ for i in os.listdir(dataset):
         img = np.array(Image.open(dataset+'/'+i +'/input/'+imgs[j]))
         gt = np.array(Image.open(dataset+'/'+i +'/groundtruth/'+gts[j]))
         mIOUs.append(eval(img,gt))
+    categorical_miou[i]=np.nanmean(mIOUs)
     
-print(np.mean(mIOUs))
+print(categorical_miou)
 
 # fig, axes = plt.subplots(1, 2, figsize=(20, 10))
 # axes[0].imshow(img)
