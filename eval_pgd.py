@@ -10,6 +10,7 @@ import torch.optim as optim
 from tqdm import tqdm
 from torch.autograd import Variable
 import torch.nn as nn
+from cleverhans.tf2.attacks.projected_gradient_descent import projected_gradient_descent
 
 
 model = models.segmentation.deeplabv3_resnet101(pretrained=True).eval()
@@ -117,6 +118,8 @@ for i in os.listdir(dataset):
     for j in tqdm(range(len(imgs))):
         img = np.array(Image.open(dataset+'/'+i + '/input/'+imgs[j]))
         img = pgd(model, img , gt)
+        x_a = projected_gradient_descent(
+            model, img, 0.01, 0.0005, 50, np.inf, rand_init=1.0)
         gt = np.array(Image.open(dataset+'/'+i + '/groundtruth/'+gts[j]))
         mIOUs.append(eval(img, gt))
     mIOUs = np.array(mIOUs)
