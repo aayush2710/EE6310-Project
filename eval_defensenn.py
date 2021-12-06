@@ -17,7 +17,7 @@ np.random.shuffle(colors)
 colors.insert(0, [0, 0, 0])  # background color must be black
 colors = np.array(colors, dtype=np.uint8)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+defense = torch.load("defense.pt")
 
 # FGSM attack code
 def fgsm_attack(image, epsilon, data_grad):
@@ -58,6 +58,7 @@ def segment(net, img,gt):
     val_loss.backward()
     data_grad = input_batch.grad
     perturbed_data = fgsm_attack(input_batch, 1e-3, data_grad)
+    cleaned_data = defense(perturbed_data)
     output = model(perturbed_data)['out'][0] # (21, height, width)
     output_predictions = output.argmax(0).byte().cpu().numpy() # (height, width) 
     r = Image.fromarray(output_predictions).resize((img.shape[1], img.shape[0]))
@@ -100,7 +101,9 @@ for i in os.listdir(dataset):
     imgs.sort()
     gts.sort()
     for j in tqdm(range(len(imgs))):
-        img = np.array(Image.open(dataset+'/'+i +'/input/'+imgs[j]))
+        img = Image.open(dataset+'/'+i +'/input/'+imgs[j])
+        img = img.resize((64,64))
+        img = np.array(img, dtype = np.float)
         gt = np.array(Image.open(dataset+'/'+i +'/groundtruth/'+gts[j]))
         mIOUs.append(eval(img,gt))
     mIOUs = np.array(mIOUs)
