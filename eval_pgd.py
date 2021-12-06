@@ -11,12 +11,9 @@ from torch.autograd import Variable
 import torch.nn as nn
 #from cleverhans.tf2.attacks.projected_gradient_descent import projected_gradient_descent
 import torch.nn.functional as F
-from dataset import SampleDataset
 from scipy.stats import rice
-from skimage.measure import compare_ssim as ssim
-from dag import DAG
-from dag_utils import generate_target, generate_target_swap
-from util import make_one_hot
+from skimage.metrics import structural_similarity as ssim
+
 
 model = models.segmentation.deeplabv3_resnet101(pretrained=True).eval()
 cmap = plt.cm.get_cmap('tab20c')
@@ -114,7 +111,7 @@ def eval(img, gt):
     segment_map, pred = segment(model, img)
     gt[gt > 0] = 1
     pred[pred > 0] = 1
-    return mIOU(pred, gt), pixel_accuracy(pred, gt), dice_score(pred, gt)
+    return mIOU(pred, gt), pixel_accuracy(pred, gt)
 
 
 def pgd(model, X, y, epsilon=0.01, num_steps=20, step_size=0.001):
@@ -156,7 +153,7 @@ def generate_rician(image):
         rv = rice(b)
         rician_image = rv.pdf(image)
         ssim_noise = ssim(
-            image[0], rician_image[0], data_range=rician_image[0].max() - rician_image[0].min())
+            image, rician_image, data_range=rician_image.max() - rician_image.min(), multichannel=True)
 
 
     return rician_image
@@ -174,9 +171,7 @@ for i in os.listdir(dataset):
     gts.sort()
     for j in tqdm(range(len(imgs))):
         img = np.array(Image.open(dataset+'/'+i + '/input/'+imgs[j]))
-        #img = pgd(model, img , gt)
-        # img = projected_gradient_descent(
-        #     model, img, 0.01, 0.0005, 50, np.inf, rand_init=1.0)
+       
         img = generate_rician(img)
         gt = np.array(Image.open(dataset+'/'+i + '/groundtruth/'+gts[j]))
         mIOUs.append(eval(img, gt))
