@@ -5,6 +5,7 @@ import matplotlib.patches as mpatches
 import torch
 from torchvision import transforms, models
 import os
+import torch.optim as optim
 from tqdm import tqdm
 import torch.nn.functional as F
 
@@ -13,8 +14,10 @@ cmap = plt.cm.get_cmap('tab20c')
 colors = (cmap(np.arange(cmap.N)) * 255).astype(np.int)[:, :3].tolist()
 np.random.seed(2020)
 np.random.shuffle(colors)
-colors.insert(0, [0, 0, 0]) # background color must be black
+colors.insert(0, [0, 0, 0])  # background color must be black
 colors = np.array(colors, dtype=np.uint8)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 # FGSM attack code
 def fgsm_attack(image, epsilon, data_grad):
@@ -46,10 +49,10 @@ def segment(net, img,gt):
         input_batch = input_batch.to('cuda')
         model.to('cuda')
 
-    output = model(input_batch)['out'][0] # (21, height, width)
+    output = model(input_batch)['out'][0].to(device) # (21, height, width)
     output[1] = torch.sum(output[1:],axis=0)
     output = output[0:2]
-    gt = torch.Tensor(gt).type(torch.int)
+    gt = torch.Tensor(gt).type(torch.int).to(device)
     val_loss = F.nll_loss(output.reshape(1,*output.shape),gt.reshape(1,*gt.shape).long())
     model.zero_grad()
     val_loss.backward()
@@ -63,21 +66,16 @@ def segment(net, img,gt):
     return r, output_predictions
 
 
-def pixel_accuracy(y_pred,y_true):
-    return np.mean(y_pred==y_true)*100
+def pixel_accuracy(y_pred, y_true):
+    return np.mean(y_pred == y_true)*100
 
-def mIOU(y_pred,y_true):
+
+def mIOU(y_pred, y_true):
     intersection = np.sum(y_pred*y_true)
     union = y_pred+y_true
-    union = np.sum(union>0)
+    union = np.sum(union > 0)
     return np.mean(intersection/union)*100
 
-def dice(y_pred, y_true, smooth=1):
-    intersection = np.sum(y_pred*y_true)
-    # union = y_pred+y_true
-    # union = np.sum(union > 0)
-    total_pixels = len(y_pred.flatten())+len(y_true.flatten())
-    return intersection/total_pixels
 
 def eval(img,gt):
     gt[gt>0] = 1
@@ -86,17 +84,19 @@ def eval(img,gt):
     f[0] = (~gt.astype(bool)).astype(int)
     segment_map, pred = segment(model, img,gt)
     pred[pred>0] = 1
-    return mIOU(pred,gt), pixel_accuracy(pred,gt), dice(pred, gt)
+    return mIOU(pred,gt), pixel_accuracy(pred,gt)
 
 
-dataset="PascalVOC2012"
+
+
+dataset = "PascalVOC2012"
 mIOUs = []
 categorical_miou = {}
 for i in os.listdir(dataset):
-    if i[0]==".":
+    if i[0] == ".":
         continue
     imgs = os.listdir(dataset+"/" + i + "/input/")
-    gts = os.listdir(dataset+"/" + i + "/groundtruth/" )
+    gts = os.listdir(dataset+"/" + i + "/groundtruth/")
     imgs.sort()
     gts.sort()
     for j in tqdm(range(len(imgs))):
@@ -104,8 +104,5 @@ for i in os.listdir(dataset):
         gt = np.array(Image.open(dataset+'/'+i +'/groundtruth/'+gts[j]))
         mIOUs.append(eval(img,gt))
     mIOUs = np.array(mIOUs)
-    categorical_miou[i]=np.nanmean(mIOUs, axis=0)
-    
-print(categorical_miou)
-
+    categorical_miou[i] = np.nanmean(mIOUs, axis=0)
 
