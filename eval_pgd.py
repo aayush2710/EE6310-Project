@@ -11,7 +11,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 #from cleverhans.tf2.attacks.projected_gradient_descent import projected_gradient_descent
 import torch.nn.functional as F
-from scipy.stats import rice
+from scipy.stats import rice, norm, uniform
 from skimage.metrics import structural_similarity as ssim
 
 
@@ -42,6 +42,7 @@ def segment(net, img):
 
     input_tensor = preprocess(img)
     input_batch = input_tensor.unsqueeze(0)
+    input_batch = input_batch.float()
 
     if torch.cuda.is_available():
         input_batch = input_batch.to('cuda')
@@ -148,13 +149,42 @@ def generate_rician(image):
 
     rician_image = np.zeros_like(image)
 
-    while ssim_noise <= 0.97 or ssim_noise >= 0.99:
-        b = np.random.uniform(0, 1)
-        rv = rice(b)
-        rician_image = rv.pdf(image)
-        ssim_noise = ssim(
-            image, rician_image, data_range=rician_image.max() - rician_image.min(), multichannel=True)
+    b = np.random.uniform(0, 1)
+    rv = rice(b)
+    rician_image = rv.pdf(image)
 
+
+    return rician_image
+
+def generate_uniform(image):
+
+    ssim_noise = 0
+
+    if torch.is_tensor(image):
+        image = image.numpy()
+
+    rician_image = np.zeros_like(image)
+
+    rv = uniform(loc = -0.035, scale=0.07)
+    rician_image = rv.pdf(image)
+        
+    return rician_image
+
+
+def generate_bimodal(image):
+
+    ssim_noise = 0
+
+    if torch.is_tensor(image):
+        image = image.numpy()
+
+    rician_image = np.zeros_like(image)
+
+        
+    rv1 = norm(loc=-0.24, scale=0.004)
+    rv2 = norm(loc=0.24, scale=0.004)
+    rician_image = rv1.pdf(image) + rv2.pdf(image)
+        
 
     return rician_image
 
@@ -172,7 +202,7 @@ for i in os.listdir(dataset):
     for j in tqdm(range(len(imgs))):
         img = np.array(Image.open(dataset+'/'+i + '/input/'+imgs[j]))
        
-        img = generate_rician(img)
+        img = generate_bimodal(img)
         gt = np.array(Image.open(dataset+'/'+i + '/groundtruth/'+gts[j]))
         mIOUs.append(eval(img, gt))
     mIOUs = np.array(mIOUs)
