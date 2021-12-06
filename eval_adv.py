@@ -22,7 +22,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # FGSM attack code
 def fgsm_attack(image, epsilon, data_grad):
     # Collect the element-wise sign of the data gradient
-    sign_data_grad = data_grad.sign()
+    sign_data_grad = torch.sign(data_grad)
     # Create the perturbed image by adjusting each pixel of the input image
     perturbed_image = image + epsilon*sign_data_grad
     # Adding clipping to maintain [0,1] range
@@ -56,7 +56,7 @@ def segment(net, img,gt):
     val_loss = F.nll_loss(output.reshape(1,*output.shape),gt.reshape(1,*gt.shape).long())
     model.zero_grad()
     val_loss.backward()
-    data_grad = input_batch.grad.data
+    data_grad = input_batch.grad
     perturbed_data = fgsm_attack(input_batch, 1e-3, data_grad)
     output = model(perturbed_data)['out'][0] # (21, height, width)
     output_predictions = output.argmax(0).byte().cpu().numpy() # (height, width) 
